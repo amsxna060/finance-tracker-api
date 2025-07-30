@@ -1,0 +1,13 @@
+# Create .gitignore in your root folder with these contents:
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.env
+.venv
+venv/
+.DS_Store
+.idea/
+.vscode/
+*.log
