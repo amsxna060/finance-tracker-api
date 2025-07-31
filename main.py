@@ -10,8 +10,16 @@ async def first_step():
 
 @app.get("/user/me")
 async def get_user_me():
-    me = User()
-    return {"user" : me}
+    me = {
+        "id" : 1,
+        "name" : "John doe",
+        "email" : "johndoe@123@gmail.com",
+        "age" : 18,
+        "currency" : "INR",
+        "location" : "India",
+        "date_create" : datetime.now().isoformat()
+    }
+    return me
 
 
 @app.get("/health")
