@@ -3,24 +3,23 @@ from datetime import datetime
 from Models.User import User
 
 app = FastAPI()
-
+user_list = []
 @app.get("/")
 async def first_step():
     return {"message": "Hello Finance World!"}
 
 @app.get("/user/me")
 async def get_user_me():
-    me = {
-        "id" : 1,
-        "name" : "John doe",
-        "email" : "johndoe@123@gmail.com",
-        "age" : 18,
-        "currency" : "INR",
-        "location" : "India",
-        "date_create" : datetime.now().isoformat()
-    }
-    return me
+    me = User(id=1,name="amol",email="amolsaxena123@gmail.com",age=25,gender="M",password="********",currency="INR",location="India")
+    return me.model_dump()
 
+@app.post('/register')
+async def registration(user : User):
+        user_list.append(user)
+        return {
+             "status": "successful",
+             "added_user":user.model_dump()
+        }
 
 @app.get("/health")
 async def health_check():

@@ -1,15 +1,17 @@
 from datetime import datetime
-from pydantic import BaseModel
+from pydantic import BaseModel,Field
+from typing import Annotated
 
 class User (BaseModel): 
-    def __init__(self):
-        id : int | None = None
-        name : str | None = None
-        email : str | None = None
-        age : int | None = None
-        gender : str | None = None
-        password : str | None = None
-        is_verified : bool = False
-        date_created : str = datetime.now().isoformat()
-        date_updated : str = datetime.now().isoformat()
+    id : Annotated[int,Field(gt=0)]
+    name : str 
+    email : str 
+    age : Annotated[int,Field(gt=0)]
+    gender : str
+    password : str | None = None
+    is_verified : bool = False
+    currency : str
+    location : str
+    date_created : str = datetime.now().isoformat()
+    date_updated : str = datetime.now().isoformat()
 
