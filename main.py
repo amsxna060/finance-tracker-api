@@ -1,10 +1,17 @@
 from fastapi import FastAPI
 from datetime import datetime
 from Models.User import User
+from Models.UserCreate import UserCreate
+from util import verify_password,get_password_hash
 
-app = FastAPI()
-user_list = []
-@app.get("/")
+app = FastAPI(
+     title="FINANCE TARCKER API",
+     description="This api is handle user finance data and trasactiona and expenses."
+     )
+
+fake_users_db = []
+
+@app.get("/",summary="Root Endpoint")
 async def first_step():
     return {"message": "Hello Finance World!"}
 
@@ -14,8 +21,23 @@ async def get_user_me():
     return me.model_dump()
 
 @app.post('/register')
-async def registration(user : User):
-        user_list.append(user)
+async def registration(new_user : UserCreate):
+        user = User(
+             id = len(fake_users_db)+1,
+             name= new_user.name,
+             email=new_user.email,
+             age=new_user.age,
+             gender=new_user.gender,
+             password=get_password_hash(new_user.password),
+             is_verified=False,
+             currency='INR',
+             location='India',
+             date_created=datetime.now().isoformat(),
+             date_updated=datetime.now().isoformat()   
+        )
+        
+        fake_users_db.append(user)
+
         return {
              "status": "successful",
              "added_user":user.model_dump()
