@@ -12,6 +12,6 @@ class User (BaseModel):
     is_verified : bool = False
     currency : str
     location : str
-    date_created : str = datetime.now().isoformat()
-    date_updated : str = datetime.now().isoformat()
+    created_at : str = datetime.now().isoformat()
+    updated_at : str = datetime.now().isoformat()
 

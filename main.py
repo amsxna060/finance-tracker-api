@@ -41,8 +41,8 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
     )
 
 @app.get("/",summary="Root Endpoint")
-async def first_step():
-    return {"message": "Hello Finance World!"}
+async def read_root():
+    return {"message": "Finance Tracker API - LIVE UPDATES WORK!", "status": "running", "version": "1.0.0"}
 
 @app.get("/user/me")
 async def get_user_me(current_user: User = Depends(get_current_user)):
@@ -127,7 +127,7 @@ async def get_all_user():
 async def health_check():
     return {
         "timestamp": datetime.now().isoformat(),
-        "status": "Api is Running"
+        "status": "Api is Running with Live updates..."
     }
 
 @app.get("/version")
