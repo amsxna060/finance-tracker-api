@@ -1,24 +1,45 @@
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from datetime import datetime
-from Models.User import User
+from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
+
+# Import your models
+from Models.User import User, UserResponse
 from Models.UserCreate import UserCreate
 from Models.LoginRequest import LoginRequest
-from util import verify_password,get_password_hash,create_access_token,verify_token
+
+# Import database components
+from database import create_tables, get_db, test_connection
+from database.models import User as DBUser
+
+from util import verify_password, get_password_hash, create_access_token, verify_token
 
 app = FastAPI(
-     title="FINANCE TARCKER API",
-     description="This api is handle user finance data and trasactiona and expenses."
-     )
+    title="FINANCE TRACKER API",
+    description="This API handles user finance data, transactions and expenses."
+)
 
-fake_users_db = []
+# Database initialization
+@app.on_event("startup")
+async def startup_event():
+    """Initialize database on application startup"""
+    print("🚀 Starting Finance Tracker API...")
+    
+    # Test database connection
+    if test_connection():
+        # Create tables
+        create_tables()
+        print("📊 Database initialization complete!")
+    else:
+        print("❌ Database initialization failed!")
 
 # Add this after your imports, before the routes
 security = HTTPBearer()
 
-def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)):
     """
-    Dependency to get current user from JWT token
+    Dependency to get current user from JWT token using database
     """
     token = credentials.credentials
     payload = verify_token(token)
@@ -29,97 +50,109 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
             detail="Invalid token"
         )
     
-    # Find user by email from token
+    # Find user by email from token using database
     user_email = payload.get("email")
-    for user in fake_users_db:
-        if user.email == user_email:
-            return user
-            
-    raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="User not found"
-    )
+    user = db.query(DBUser).filter(DBUser.email == user_email).first()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found"
+        )
+    
+    return user
 
-@app.get("/",summary="Root Endpoint")
-async def read_root():
-    return {"message": "Finance Tracker API - LIVE UPDATES WORK!", "status": "running", "version": "1.0.0"}
+@app.get("/", summary="Root Endpoint")
+async def first_step():
+    return {"message": "Hello Finance World!"}
 
-@app.get("/user/me")
-async def get_user_me(current_user: User = Depends(get_current_user)):
-    return current_user.model_dump()
+@app.get("/user/me", response_model=UserResponse)
+async def get_user_me(current_user: DBUser = Depends(get_current_user)):
+    """Get current user profile"""
+    return current_user
 
-@app.post('/register')
-async def registration(new_user : UserCreate):
-        user = User(
-             id = len(fake_users_db)+1,
-             name= new_user.name,
-             email=new_user.email,
-             age=new_user.age,
-             gender=new_user.gender,
-             password=get_password_hash(new_user.password),
-             is_verified=False,
-             currency='INR',
-             location='India',
-             date_created=datetime.now().isoformat(),
-             date_updated=datetime.now().isoformat()   
+@app.post('/register', response_model=UserResponse)
+async def registration(new_user: UserCreate, db: Session = Depends(get_db)):
+    """Register a new user using database"""
+    try:
+        # Create new user instance
+        db_user = DBUser(
+            name=new_user.name,
+            email=new_user.email,
+            age=new_user.age,
+            gender=new_user.gender,
+            password=get_password_hash(new_user.password),
+            is_verified=False,
+            currency='INR',
+            location='India'
+        )
+        
+        # Add to database
+        db.add(db_user)
+        db.commit()
+        db.refresh(db_user)  # Get the ID and timestamps
+        
+        return db_user
+        
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User with this email already exists"
+        )
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Registration failed: {str(e)}"
         )
 
-        fake_users_db.append(user)
-
-        return {
-             "status": status.HTTP_201_CREATED,
-             "added_user":user.model_dump()
-        }
-
 @app.post('/login')
-async def login(login_request: LoginRequest ):
-     email_list_of_user = {user.email:user.password for user in fake_users_db}
-     if login_request.email in email_list_of_user.keys():
-          if verify_password(login_request.password,email_list_of_user[login_request.email]):
-            # Step 2: Find the actual user object (you need this!)
-            current_user:User|None = None
-            for user in fake_users_db:
-                if user.email == login_request.email:
-                    current_user = user
-                    break
-            # Step 3: Create JWT token with user data
-            token_data = {
-                "user_id": current_user.id,
-                "email": current_user.email
-            }
-            access_token = create_access_token(data=token_data)
-            # Step 4: Return success with real JWT
-            return {
-                'status': status.HTTP_200_OK,
-                'access_token': access_token,
-                'token_type': 'bearer',
-                'user': {
-                    'id': current_user.id,
-                    'name': current_user.name,
-                    'email': current_user.email
-                }
-            }
-          else:
-               return {
-                    'status': status.HTTP_401_UNAUTHORIZED,
-                    'description':'Login failed due to Wrong Password'
-               }
-     else:
-          return {
-               'status': status.HTTP_404_NOT_FOUND,
-               'description':'No user found!'
-          }
-          
-
-
-
-          
-@app.get('/users')   
-async def get_all_user():
+async def login(login_request: LoginRequest, db: Session = Depends(get_db)):
+    """Login user using database"""
+    # Find user by email
+    user = db.query(DBUser).filter(DBUser.email == login_request.email).first()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='User not found'
+        )
+    
+    # Verify password
+    if not verify_password(login_request.password, user.password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='Incorrect password'
+        )
+    
+    # Create JWT token
+    token_data = {
+        "user_id": user.id,
+        "email": user.email
+    }
+    access_token = create_access_token(data=token_data)
+    
     return {
-        'status':status.HTTP_200_OK,
-        'users':fake_users_db
-    }   
+        'status': status.HTTP_200_OK,
+        'access_token': access_token,
+        'token_type': 'bearer',
+        'user': {
+            'id': user.id,
+            'name': user.name,
+            'email': user.email
+        }
+    }
+          
+
+
+
+          
+@app.get('/users', response_model=list[UserResponse])
+async def get_all_users(db: Session = Depends(get_db)):
+    """Get all users from database"""
+    users = db.query(DBUser).all()
+    return users   
           
 
 
@@ -127,13 +160,14 @@ async def get_all_user():
 async def health_check():
     return {
         "timestamp": datetime.now().isoformat(),
-        "status": "Api is Running with Live updates..."
+        "status": "API is Running",
+        "database": "Connected"
     }
 
 @app.get("/version")
 async def get_version():
     return {
-        "version" : "1.0.0",
+        "version": "1.0.0",
         "description": "This is the version endpoint of the Finance API."
     }
  
