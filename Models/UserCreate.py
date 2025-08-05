@@ -1,19 +1,19 @@
-from pydantic import BaseModel,Field,field_validator,ValidationError
+from pydantic import BaseModel, Field, field_validator, ValidationError
 from typing import Annotated
 
 class UserCreate(BaseModel):
-    name : str 
-    email : str
-    age : Annotated[int,Field(gt=0)]
-    gender : str
-    password : str
+    name: str 
+    email: str
+    age: Annotated[int, Field(gt=0)]
+    gender: str
+    password: str
 
     @field_validator('email')
-    def email_validation(cls,email):
+    def email_validation(cls, email):
         if '@' not in email:
-            raise ValidationError("Wrong Email, '@' is missing")
+            raise ValueError("Wrong Email, '@' is missing")
         elif '.com' not in email:
-            raise ValidationError("Wrong Email, '.com' is missing.")
+            raise ValueError("Wrong Email, '.com' is missing.")
         else:
             return email
     
