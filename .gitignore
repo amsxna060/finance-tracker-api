@@ -11,3 +11,7 @@ venv/
 .idea/
 .vscode/
 *.log
+
+# Database files
+*.db
+finance_tracker.db
