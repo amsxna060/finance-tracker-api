@@ -1,38 +1,27 @@
-from pydantic import BaseModel,field_validator,ValidationError
+from pydantic import BaseModel, field_validator, ValidationInfo
+from pydantic_core import ValidationError
 import re
 
 class LoginRequest(BaseModel):
-    email:str
-    password:str
+    email: str
+    password: str
 
     @field_validator('email')
-    def email_validation(cls,email):
+    def email_validation(cls, email):
         if '@' not in email:
-            raise ValidationError("Wrong Email, '@' is missing")
+            raise ValueError("Wrong Email, '@' is missing")
         elif '.com' not in email:
-            raise ValidationError("Wrong Email, '.com' is missing.")
+            raise ValueError("Wrong Email, '.com' is missing.")
         else:
             return email
         
     @field_validator('password')
-    def password_strength_check(cls,password):
-        # This regex uses lookaheads to check for all conditions at once.
-        pattern = r"^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[#?!@$%^&*-]).{8,}$"
-
-        # re.match checks for a match only at the beginning of the string.
-        if re.match(pattern, password):
-            return password
-        else:
-            return ValidationError("""
-    Checks if a password is strong using a single regular expression.
-    A strong password must:
-    - Be at least 8 characters long
-    - Contain at least one uppercase letter
-    - Contain at least one lowercase letter
-    - Contain at least one number
-    - Contain at least one special character (@$!%*?&#)
-    """
-)
+    def password_strength_check(cls, password):
+        # For login, we don't need strict password validation
+        # Just ensure it's not empty
+        if not password or len(password.strip()) == 0:
+            raise ValueError("Password cannot be empty")
+        return password
 
 
         
