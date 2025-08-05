@@ -11,3 +11,12 @@ venv/
 .idea/
 .vscode/
 *.log
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Test files and temporary files
+/tmp/
+main.py.backup
