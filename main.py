@@ -2,8 +2,13 @@ from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from datetime import datetime
 from Models.User import User
+from Models.UserResponse import UserResponse
+from database.models import User as DBUser
+from database.models.user import Gender
 from Models.UserCreate import UserCreate
 from Models.LoginRequest import LoginRequest
+from sqlalchemy.orm import Session
+from database.session import get_db
 from util import verify_password,get_password_hash,create_access_token,verify_token
 
 app = FastAPI(
@@ -16,7 +21,7 @@ fake_users_db = []
 # Add this after your imports, before the routes
 security = HTTPBearer()
 
-def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security),db : Session = Depends(get_db)):
     """
     Dependency to get current user from JWT token
     """
@@ -31,87 +36,86 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
     
     # Find user by email from token
     user_email = payload.get("email")
-    for user in fake_users_db:
-        if user.email == user_email:
-            return user
-            
-    raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="User not found"
-    )
+    user =  db.query(DBUser).filter(DBUser.email == user_email).first()
+    if user : 
+        return UserResponse.model_validate(user)
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found"
+        )
 
 @app.get("/",summary="Root Endpoint")
 async def read_root():
     return {"message": "Finance Tracker API - LIVE UPDATES WORK!", "status": "running", "version": "1.0.0"}
 
 @app.get("/user/me")
-async def get_user_me(current_user: User = Depends(get_current_user)):
-    return current_user.model_dump()
+async def get_user_me(current_user: UserResponse = Depends(get_current_user)):
+    return current_user
 
 @app.post('/register')
-async def registration(new_user : UserCreate):
-        user = User(
-             id = len(fake_users_db)+1,
+async def registration(new_user : UserCreate, db : Session = Depends(get_db)):
+        
+        #first check if user is in database already
+        existing_user = db.query(DBUser).filter(DBUser.email == new_user.email).first()
+
+        if existing_user :
+            raise HTTPException(status.HTTP_400_BAD_REQUEST,"User Already Exist")
+        
+        hashed_password = get_password_hash(new_user.password)
+        user = DBUser(
              name= new_user.name,
              email=new_user.email,
-             age=new_user.age,
-             gender=new_user.gender,
-             password=get_password_hash(new_user.password),
-             is_verified=False,
-             currency='INR',
-             location='India',
-             date_created=datetime.now().isoformat(),
-             date_updated=datetime.now().isoformat()   
+             password=hashed_password,
+             age= getattr(new_user,'age',None),
+             gender=getattr(new_user,'gender',Gender.MALE),
+             is_verified=getattr(new_user,'is_verified',False),
+             currency=getattr(new_user,'currency','INR'),
+             location=getattr(new_user,'location','India'), 
         )
 
-        fake_users_db.append(user)
-
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    
         return {
              "status": status.HTTP_201_CREATED,
-             "added_user":user.model_dump()
+             "message": "User Created Successfully",
+             "user": {
+                 "name":user.name,
+                 "email":user.email
+             }
         }
 
 @app.post('/login')
-async def login(login_request: LoginRequest ):
-     email_list_of_user = {user.email:user.password for user in fake_users_db}
-     if login_request.email in email_list_of_user.keys():
-          if verify_password(login_request.password,email_list_of_user[login_request.email]):
-            # Step 2: Find the actual user object (you need this!)
-            current_user:User|None = None
-            for user in fake_users_db:
-                if user.email == login_request.email:
-                    current_user = user
-                    break
-            # Step 3: Create JWT token with user data
-            token_data = {
-                "user_id": current_user.id,
-                "email": current_user.email
+async def login(login_request: LoginRequest , db : Session = Depends(get_db)):
+     # try to fetch the user 
+     user = db.query(DBUser).filter(DBUser.email==login_request.email).first()
+     if not user :
+         raise HTTPException(status.HTTP_401_UNAUTHORIZED,"Not Have Account, please Sign Up!!")
+     
+     # Step 2: Verify Password
+     if verify_password(login_request.password,user.password):
+        # Step 3: Create JWT token with user data
+        token_data = {
+            "id": user.id,
+            "email": user.email
+        }
+        access_token = create_access_token(data=token_data)
+        # Step 4: Return success with real JWT
+        return {
+            'status': status.HTTP_200_OK,
+            'access_token': access_token,
+            'token_type': 'bearer',
+            'user': {
+                'id': user.id,
+                'name': user.name,
+                'email': user.email
             }
-            access_token = create_access_token(data=token_data)
-            # Step 4: Return success with real JWT
-            return {
-                'status': status.HTTP_200_OK,
-                'access_token': access_token,
-                'token_type': 'bearer',
-                'user': {
-                    'id': current_user.id,
-                    'name': current_user.name,
-                    'email': current_user.email
-                }
-            }
-          else:
-               return {
-                    'status': status.HTTP_401_UNAUTHORIZED,
-                    'description':'Login failed due to Wrong Password'
-               }
+        }
+
      else:
-          return {
-               'status': status.HTTP_404_NOT_FOUND,
-               'description':'No user found!'
-          }
-          
-
-
+         raise HTTPException(status.HTTP_401_UNAUTHORIZED,"Wrong Password!!")
 
           
 @app.get('/users')   

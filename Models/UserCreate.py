@@ -1,11 +1,12 @@
 from pydantic import BaseModel,Field,field_validator,ValidationError
 from typing import Annotated
+from database.models.user import Gender
 
 class UserCreate(BaseModel):
     name : str 
     email : str
     age : Annotated[int,Field(gt=0)]
-    gender : str
+    gender : Gender
     password : str
 
     @field_validator('email')

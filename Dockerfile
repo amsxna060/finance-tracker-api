@@ -16,5 +16,8 @@ COPY . .
 # Expose port 8000
 EXPOSE 8000
 
+# Make scripts executable
+RUN chmod +x run_once.py
+
 # Run FastAPI with uvicorn
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000","--reload"]
