@@ -4,12 +4,14 @@ from datetime import datetime
 from Models.User import User
 from Models.UserResponse import UserResponse
 from database.models import User as DBUser
-from database.models.user import Gender
+from database.models.user import Gender, Role
 from Models.UserCreate import UserCreate
 from Models.LoginRequest import LoginRequest
 from sqlalchemy.orm import Session
 from database.session import get_db
 from util import verify_password,get_password_hash,create_access_token,verify_token
+from auth.permissions import get_current_user, require_auth
+from routers import admin
 
 app = FastAPI(
      title="FINANCE TARCKER API",
@@ -21,29 +23,8 @@ fake_users_db = []
 # Add this after your imports, before the routes
 security = HTTPBearer()
 
-def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security),db : Session = Depends(get_db)):
-    """
-    Dependency to get current user from JWT token
-    """
-    token = credentials.credentials
-    payload = verify_token(token)
-    
-    if payload is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token"
-        )
-    
-    # Find user by email from token
-    user_email = payload.get("email")
-    user =  db.query(DBUser).filter(DBUser.email == user_email).first()
-    if user : 
-        return UserResponse.model_validate(user)
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found"
-        )
+# Include admin router
+app.include_router(admin.router)
 
 @app.get("/",summary="Root Endpoint")
 async def read_root():
@@ -69,6 +50,7 @@ async def registration(new_user : UserCreate, db : Session = Depends(get_db)):
              password=hashed_password,
              age= getattr(new_user,'age',None),
              gender=getattr(new_user,'gender',Gender.MALE),
+             role=getattr(new_user,'role',Role.USER),  # Add role with default
              is_verified=getattr(new_user,'is_verified',False),
              currency=getattr(new_user,'currency','INR'),
              location=getattr(new_user,'location','India'), 
@@ -99,7 +81,8 @@ async def login(login_request: LoginRequest , db : Session = Depends(get_db)):
         # Step 3: Create JWT token with user data
         token_data = {
             "id": user.id,
-            "email": user.email
+            "email": user.email,
+            "role": user.role.value  # Add role to JWT token
         }
         access_token = create_access_token(data=token_data)
         # Step 4: Return success with real JWT
