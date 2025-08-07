@@ -18,8 +18,6 @@ app = FastAPI(
      description="This api is handle user finance data and trasactiona and expenses."
      )
 
-fake_users_db = []
-
 # Add this after your imports, before the routes
 security = HTTPBearer()
 
@@ -100,15 +98,7 @@ async def login(login_request: LoginRequest , db : Session = Depends(get_db)):
      else:
          raise HTTPException(status.HTTP_401_UNAUTHORIZED,"Wrong Password!!")
 
-          
-@app.get('/users')   
-async def get_all_user():
-    return {
-        'status':status.HTTP_200_OK,
-        'users':fake_users_db
-    }   
-          
-
+           
 
 @app.get("/health")
 async def health_check():

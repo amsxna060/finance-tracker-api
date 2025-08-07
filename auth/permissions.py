@@ -57,14 +57,6 @@ def require_auth(current_user: UserResponse = Depends(get_current_user)):
     """
     return current_user
 
-def require_role(required_role: str):
-    """
-    Decorator factory that creates a dependency requiring a specific role
-    """
-    def role_dependency(current_user: UserResponse = Depends(get_current_user)):
-        if current_user.role.value != required_role:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
 def require_role(required_role: Role):
     """
     Decorator factory that creates a dependency requiring a specific role
