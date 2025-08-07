@@ -13,6 +13,10 @@ class Gender(enum.Enum):
     FEMALE = 'female'
     OTHER = 'other'
 
+class Role(enum.Enum):
+    USER = 'user'
+    ADMIN = 'admin'
+
 
 
 class User(Base):
@@ -24,6 +28,7 @@ class User(Base):
     gender = Column(Enum(Gender),default=Gender.MALE)  
     password = Column(String)  # Will store hashed password
     age = Column(Integer, nullable = True)
+    role = Column(Enum(Role), default=Role.USER)  # Add role field with default 'user'
     is_verified = Column(Boolean, default=False)
     currency = Column(String, default="USD")
     location = Column(String, nullable=True)
