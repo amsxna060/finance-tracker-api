@@ -53,7 +53,7 @@ async def registration(new_user : UserCreate, db : Session = Depends(get_db)):
              currency=getattr(new_user,'currency','INR'),
              location=getattr(new_user,'location','India'), 
         )
-
+        
         db.add(user)
         db.commit()
         db.refresh(user)

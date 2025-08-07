@@ -6,9 +6,9 @@ from sqlalchemy.types import Enum
 import enum
 
 class CategoryType(enum.Enum):
-    INCOME = 'income'
-    EXPENSE = 'expense'
-    TRANSFER = 'transfer'
+    INCOME = 'INCOME'
+    EXPENSE = 'EXPENSE'
+    TRANSFER = 'TRANSFER'
 
 # 🌉 THE BRIDGE TABLE - This is the magic connector!
 user_category_association = Table(

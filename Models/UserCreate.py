@@ -8,7 +8,7 @@ class UserCreate(BaseModel):
     age : Annotated[int,Field(gt=0)]
     gender : Gender
     password : str
-    role : Optional[Role] = Role.USER  # Add role field with default 'user'
+    # role : Optional[Role] = Role.USER  # Add role field with default 'user'
 
     @field_validator('email')
     def email_validation(cls,email):

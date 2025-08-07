@@ -6,9 +6,9 @@ from sqlalchemy.types import Enum
 import enum
 
 class TransactionType(enum.Enum):
-    INCOME = 'income'
-    EXPENSE = 'expense'
-    TRANSFER = 'transfer'
+    INCOME = 'INCOME'
+    EXPENSE = 'EXPENSE'
+    TRANSFER = 'TRANSFER'
 
 class Transaction(Base):
     __tablename__ = "transactions"  # Note: you had "trasactions" (typo) in SQL

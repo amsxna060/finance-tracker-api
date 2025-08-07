@@ -9,13 +9,13 @@ from .category import user_category_association
 import enum
 
 class Gender(enum.Enum):
-    MALE = 'male'
-    FEMALE = 'female'
-    OTHER = 'other'
+    MALE = 'MALE'
+    FEMALE = 'FEMALE'
+    OTHER = 'OTHER'
 
 class Role(enum.Enum):
-    USER = 'user'
-    ADMIN = 'admin'
+    USER = 'USER'
+    ADMIN = 'ADMIN'
 
 
 

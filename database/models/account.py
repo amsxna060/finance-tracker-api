@@ -10,15 +10,15 @@ class AccountType(enum.Enum):
     Represents the different types of financial accounts in a tracking app.
     """
     # Asset Accounts (what you own)
-    CHECKING = 'checking'          # For daily transactions
-    SAVINGS = 'savings'            # For saving money
-    CASH = 'cash'                  # Physical cash
-    INVESTMENT = 'investment'      # Brokerage accounts, 401(k), IRA
-    PROPERTY = 'property'          # Real estate, vehicles, etc.
+    CHECKING = 'CHECKING'          # For daily transactions
+    SAVINGS = 'SAVINGS'            # For saving money
+    CASH = 'CASH'                  # Physical cash
+    INVESTMENT = 'INVESTMENT'      # Brokerage accounts, 401(k), IRA
+    PROPERTY = 'PROPERTY'          # Real estate, vehicles, etc.
 
     # Liability Accounts (what you owe)
-    CREDIT_CARD = 'credit_card'    # Revolving credit
-    LOAN = 'loan'                  # Mortgages, student loans, auto loans
+    CREDIT_CARD = 'CREDIT_CARD'    # Revolving credit
+    LOAN = 'LOAN'                  # Mortgages, student loans, auto loans
     
 
 class Account(Base):
