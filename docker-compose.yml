@@ -10,6 +10,7 @@ services:
       - db
     environment:
       - DATABASE_URL=postgresql://postgres:password@db:5432/finance_tracker
+      - TZ=Asia/Kolkata
 
   db:
     image: postgres:15
