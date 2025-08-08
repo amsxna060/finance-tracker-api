@@ -1,12 +1,11 @@
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from datetime import datetime
-from Models.User import User
-from Models.UserResponse import UserResponse
+
+# Updated imports to use new model structure
+from Models.users import UserResponse, UserCreateRequest, LoginRequest
 from database.models import User as DBUser
 from database.models.user import Gender, Role
-from Models.UserCreate import UserCreate
-from Models.LoginRequest import LoginRequest
 from sqlalchemy.orm import Session
 from database.session import get_db
 from util import verify_password,get_password_hash,create_access_token,verify_token
@@ -34,7 +33,7 @@ async def get_user_me(current_user: UserResponse = Depends(get_current_user)):
     return current_user
 
 @app.post('/register')
-async def registration(new_user : UserCreate, db : Session = Depends(get_db)):
+async def registration(new_user : UserCreateRequest, db : Session = Depends(get_db)):
         
         #first check if user is in database already
         existing_user = db.query(DBUser).filter(DBUser.email == new_user.email).first()

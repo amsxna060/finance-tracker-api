@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from database.session import get_db
 from database.models import User as DBUser
 from database.models.user import Role
-from Models.UserResponse import UserResponse
+from Models.users import UserResponse
 from util import verify_token
 
 # Security scheme for token extraction

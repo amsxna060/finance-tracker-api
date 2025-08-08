@@ -3,12 +3,13 @@ from sqlalchemy.orm import Session
 from typing import List
 from pydantic import BaseModel
 
-from Models.AccountResponse import AccountResponse
+# Updated imports to use new model structure
+from Models.accounts import AccountResponse
+from Models.users import UserResponse
 from database.session import get_db
 from database.models import User as DBUser
 from database.models import Account as DBAccount
 from database.models.user import Role
-from Models.UserResponse import UserResponse
 from auth.permissions import require_admin
 
 router = APIRouter(

@@ -5,10 +5,10 @@ from typing import List
 from pydantic import BaseModel
 from database.session import get_db
 from database.models import Account as DBAccount
-from Models.AccountResponse import AccountResponse
-from Models.AccountRequest import AccountRequest
-from Models.AccountUpdateRequest import AccountUpdateRequest
-from auth.permissions import require_auth,get_current_user
+
+# Updated imports to use new model structure
+from Models.accounts import AccountResponse, AccountCreateRequest, AccountUpdateRequest
+from auth.permissions import require_auth, get_current_user
 
 
 router = APIRouter(
@@ -18,7 +18,7 @@ router = APIRouter(
 )
 
 @router.post('/create')
-async def create_account(req_account : AccountRequest,db: Session = Depends(get_db),current_user = Depends(get_current_user)):
+async def create_account(req_account : AccountCreateRequest,db: Session = Depends(get_db),current_user = Depends(get_current_user)):
     # create account
     # step 1 check account already exist.
     # step 2 create account
@@ -68,7 +68,7 @@ async def get_account(account_id: int, db: Session = Depends(get_db), current_us
         )
     return AccountResponse.model_validate(account)
 @router.put('/update/{account_id}', response_model=AccountResponse)
-async def update_account(account_id: int, req_account: AccountRequest, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+async def update_account(account_id: int, req_account: AccountCreateRequest, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     account = db.query(DBAccount).filter(DBAccount.id == account_id, DBAccount.user_id == current_user.id).first()
     if not account:
         raise HTTPException(
