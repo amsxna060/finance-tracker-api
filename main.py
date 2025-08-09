@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from database.session import get_db
 from util import verify_password,get_password_hash,create_access_token,verify_token
 from auth.permissions import get_current_user, require_auth
-from routers import admin,account
+from routers import admin, account, category,transaction
 
 app = FastAPI(
      title="FINANCE TARCKER API",
@@ -20,9 +20,11 @@ app = FastAPI(
 # Add this after your imports, before the routes
 security = HTTPBearer()
 
-# Include admin router
+# Include routers
 app.include_router(admin.router)
 app.include_router(account.router)
+app.include_router(category.router)
+app.include_router(transaction.router)
 
 @app.get("/",summary="Root Endpoint")
 async def read_root():

@@ -17,13 +17,15 @@ class Transaction(Base):
     transaction_name = Column(String, nullable=False)  # "Grocery shopping", "Salary"
     amount = Column(Float, nullable=False)
     transaction_type = Column(Enum(TransactionType), nullable=False)
-    from_account = Column(String, nullable=True)  # For transfers
-    to_account = Column(String, nullable=True)    # For transfers
+    to_account = Column(Integer, nullable=True)    # For transfers
     description = Column(String, nullable=True)   # Extra details
+    
+    # Add this line:
+    date = Column(DateTime, default=func.now(), nullable=False)  # Transaction date
     
     # Foreign Keys (Many-to-One relationships)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    account_id = Column(Integer, ForeignKey("accounts.id"), nullable=False) 
+    account_id = Column(Integer, ForeignKey("accounts.id"), nullable=False) # from or to both
     category_id = Column(Integer, ForeignKey("categories.id"), nullable=False)
     
     # Timestamps

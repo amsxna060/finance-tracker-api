@@ -19,8 +19,8 @@ class TransactionResponse(BaseModel):
     category_id: int
     user_id: int
     description: Optional[str] = None
-    transaction_date: datetime
-    to_account_id: Optional[int] = None
+    date: datetime
+    to_account: Optional[int] = None
     created_at: datetime
     updated_at: datetime
 
